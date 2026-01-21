@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planungsmodul Museumsbeleuchtung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 1em;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2a5298;
+            border-bottom: 3px solid #2a5298;
+        }
+
+        .content {
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        .sheet-content {
+            display: none;
+        }
+
+        .sheet-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+            font-weight: 600;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            font-weight: 600;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: 600;
+        }
+
+        .add-row-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .add-row-btn:hover {
+            background: #218838;
+        }
+
+        /* Haftungsausschluss-Banner */
+        .footer-banner {
+            background: #2a5298;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 30px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .footer-banner strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Planungsmodul Museumsbeleuchtung</h1>
+            <p>HTL-Standard | Nico Vukasinovic | Diplomarbeit 2025/26</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📋 Raumliste</button>
+            <button class="tab" onclick="switchTab(1)">💡 Leuchtenauswahl</button>
+            <button class="tab" onclick="switchTab(2)">💰 TCO-Rechner</button>
+            <button class="tab" onclick="switchTab(3)">📡 Sensor-Layout</button>
+            <button class="tab" onclick="switchTab(4)">📊 Messprotokoll</button>
+        </div>
+
+        <div class="content">
+            <!-- Raumliste -->
+            <div class="sheet-content active" id="tab-0">
+                <h2>Raumliste mit Lichtplanung</h2>
+                <button class="add-row-btn" onclick="addRaumRow()">+ Neuer Raum</button>
+                <table id="raumliste">
+                    <thead>
+                        <tr>
+                            <th>Raum</th>
+                            <th>Fläche (m²)</th>
+                            <th>E_m Soll (lx)</th>
+                            <th>E_m Ist (lx)</th>
+                            <th>CRI Soll</th>
+                            <th>CRI Ist</th>
+                            <th>UGR Soll</th>
+                            <th>UGR Ist</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="Eingang"></td>
+                            <td><input type="number" value="80"></td>
+                            <td><input type="number" value="150"></td>
+                            <td><input type="number" value="155"></td>
+                            <td><input type="number" value="90"></td>
+                            <td><input type="number" value="95"></td>
+                            <td><input type="number" value="16"></td>
+                            <td><input type="number" value="15"></td>
+                            <td class="status-cell">OK</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Dauerausstellung"></td>
+                            <td><input type="number" value="250"></td>
+                            <td><input type="number" value="50"></td>
+                            <td><input type="number" value="48"></td>
+                            <td><input type="number" value="95"></td>
+                            <td><input type="number" value="98"></td>
+                            <td><input type="number" value="19"></td>
+                            <td><input type="number" value="18"></td>
+                            <td class="status-cell">OK</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Vitrine Textil"></td>
+                            <td><input type="number" value="4"></td>
+                            <td><input type="number" value="50"></td>
+                            <td><input type="number" value="65"></td>
+                            <td><input type="number" value="95"></td>
+                            <td><input type="number" value="92"></td>
+                            <td><input type="number" value="16"></td>
+                            <td><input type="number" value="22"></td>
+                            <td class="status-cell">WARNUNG</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Leuchtenauswahl -->
+            <div class="sheet-content" id="tab-1">
+                <h2>Leuchtenauswahl & Vergleich</h2>
+                <button class="add-row-btn" onclick="addLeuchteRow()">+ Neue Leuchte</button>
+                <table id="leuchten">
+                    <thead>
+                        <tr>
+                            <th>Hersteller</th>
+                            <th>Modell</th>
+                            <th>Lichtstrom (lm)</th>
+                            <th>Leistung (W)</th>
+                            <th>CRI</th>
+                            <th>L80B10 (h)</th>
+                            <th>Preis (€)</th>
+                            <th>lm/W</th>
+                            <th>€/klm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="ERCO"></td>
+                            <td><input type="text" value="Parscan 98"></td>
+                            <td><input type="number" value="3000"></td>
+                            <td><input type="number" value="23"></td>
+                            <td><input type="number" value="98"></td>
+                            <td><input type="number" value="50000"></td>
+                            <td><input type="number" value="450"></td>
+                            <td>130</td>
+                            <td>150</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Zumtobel"></td>
+                            <td><input type="text" value="Supersystem"></td>
+                            <td><input type="number" value="2800"></td>
+                            <td><input type="number" value="22"></td>
+                            <td><input type="number" value="95"></td>
+                            <td><input type="number" value="50000"></td>
+                            <td><input type="number" value="380"></td>
+                            <td>127</td>
+                            <td>136</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="ETC"></td>
+                            <td><input type="text" value="Source 4 LED"></td>
+                            <td><input type="number" value="2600"></td>
+                            <td><input type="number" value="24"></td>
+                            <td><input type="number" value="92"></td>
+                            <td><input type="number" value="30000"></td>
+                            <td><input type="number" value="520"></td>
+                            <td>108</td>
+                            <td>200</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TCO-Rechner -->
+            <div class="sheet-content" id="tab-2">
+                <h2>Total Cost of Ownership (TCO)</h2>
+                <table id="tco-table">
+                    <thead>
+                        <tr>
+                            <th>Posten</th>
+                            <th>CAPEX (€)</th>
+                            <th>OPEX (€/Jahr)</th>
+                            <th>Lebensdauer (Jahre)</th>
+                            <th>Zinssatz (%)</th>
+                            <th>TCO (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="LED-Track-System"></td>
+                            <td><input type="number" value="12000"></td>
+                            <td><input type="number" value="400"></td>
+                            <td><input type="number" value="12"></td>
+                            <td><input type="number" value="3" step="0.1"></td>
+                            <td>15800</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="DALI-2 Steuerung"></td>
+                            <td><input type="number" value="3000"></td>
+                            <td><input type="number" value="50"></td>
+                            <td><input type="number" value="15"></td>
+                            <td><input type="number" value="3" step="0.1"></td>
+                            <td>3590</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Sensorik (HF+Lux)"></td>
+                            <td><input type="number" value="2000"></td>
+                            <td><input type="number" value="0"></td>
+                            <td><input type="number" value="10"></td>
+                            <td><input type="number" value="3" step="0.1"></td>
+                            <td>2000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sensor-Layout -->
+            <div class="sheet-content" id="tab-3">
+                <h2>Sensor-Layout & Adressierung</h2>
+                <table id="sensor-table">
+                    <thead>
+                        <tr>
+                            <th>Zone</th>
+                            <th>Sensor-Typ</th>
+                            <th>DALI-Adresse</th>
+                            <th>Casambi-ID</th>
+                            <th>Reichweite (m)</th>
+                            <th>Preis (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="Eingang"></td>
+                            <td>
+                                <select>
+                                    <option>HF-Präsenz (24 GHz)</option>
+                                    <option>PIR-Bewegung</option>
+                                    <option>Tageslicht</option>
+                                </select>
+                            </td>
+                            <td><input type="number" value="1"></td>
+                            <td><input type="text" value="CSB-001"></td>
+                            <td><input type="number" value="8"></td>
+                            <td><input type="number" value="45"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="Ausstellung"></td>
+                            <td>
+                                <select>
+                                    <option selected>Tageslicht</option>
+                                    <option>HF-Präsenz (24 GHz)</option>
+                                    <option>PIR-Bewegung</option>
+                                </select>
+                            </td>
+                            <td><input type="number" value="2"></td>
+                            <td><input type="text" value="CSB-002"></td>
+                            <td><input type="number" value="12"></td>
+                            <td><input type="number" value="35"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Messprotokoll -->
+            <div class="sheet-content" id="tab-4">
+                <h2>Messprotokoll (DIN 5035-7)</h2>
+                <table id="messprotokoll">
+                    <thead>
+                        <tr>
+                            <th>Messpunkt</th>
+                            <th>E_v (lx)</th>
+                            <th>CCT (K)</th>
+                            <th>CRI</th>
+                            <th>UGR</th>
+                            <th>UV (µW/lm)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="MP-01 Zentrum"></td>
+                            <td><input type="number" value="152"></td>
+                            <td><input type="number" value="3000"></td>
+                            <td><input type="number" value="95"></td>
+                            <td><input type="number" value="15"></td>
+                            <td><input type="number" value="1.5"></td>
+                            <td class="status-cell">OK</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="MP-02 Wand"></td>
+                            <td><input type="number" value="48"></td>
+                            <td><input type="number" value="2700"></td>
+                            <td><input type="number" value="98"></td>
+                            <td><input type="number" value="16"></td>
+                            <td><input type="number" value="2.0"></td>
+                            <td class="status-cell">OK</td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="MP-03 Vitrine"></td>
+                            <td><input type="number" value="65"></td>
+                            <td><input type="number" value="2700"></td>
+                            <td><input type="number" value="92"></td>
+                            <td><input type="number" value="22"></td>
+                            <td><input type="number" value="8.5"></td>
+                            <td class="status-cell">WARNUNG</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Haftungsausschluss-Banner -->
+        <div class="footer-banner">
+            <strong>Haftungsausschluss</strong>
+            Alle Berechnungen erfolgen nach bestem Wissen. Für die Verwendung in der Praxis müssen alle Werte
+            durch Fachpersonal überprüft und ggf. angepasst werden. Die Autoren übernehmen keine Haftung für
+            Schäden oder Fehlplanungen, die aus der Verwendung dieses Tools resultieren.
+        </div>
+    </div>
+
+    <script>
+        // Tab-Wechsel
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.sheet-content').forEach((content, i) => {
+                content.classList.toggle('active', i === index);
+            });
+        }
+
+        // Status für Raumliste aktualisieren
+        function updateRaumStatus() {
+            const rows = document.querySelectorAll('#raumliste tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('input');
+                const emSoll = parseFloat(cells[2].value) || 0;
+                const emIst = parseFloat(cells[3].value) || 0;
+                const criSoll = parseFloat(cells[4].value) || 0;
+                const criIst = parseFloat(cells[5].value) || 0;
+                const ugrSoll = parseFloat(cells[6].value) || 0;
+                const ugrIst = parseFloat(cells[7].value) || 0;
+
+                const statusCell = row.querySelector('.status-cell');
+
+                const emDiff = Math.abs(emIst - emSoll) / emSoll;
+                const criOk = criIst >= criSoll;
+                const ugrOk = ugrIst <= ugrSoll;
+
+                if (emDiff < 0.1 && criOk && ugrOk) {
+                    statusCell.textContent = 'OK';
+                    statusCell.className = 'status-cell status-ok';
+                } else if (emDiff < 0.3 && criIst >= criSoll - 5 && ugrIst <= ugrSoll + 3) {
+                    statusCell.textContent = 'WARNUNG';
+                    statusCell.className = 'status-cell status-warning';
+                } else {
+                    statusCell.textContent = 'FEHLER';
+                    statusCell.className = 'status-cell status-error';
+                }
+            });
+        }
+
+        // Status für Messprotokoll aktualisieren
+        function updateMessStatus() {
+            const rows = document.querySelectorAll('#messprotokoll tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('input');
+                const ugr = parseFloat(cells[4].value) || 0;
+                const uv = parseFloat(cells[5].value) || 0;
+
+                const statusCell = row.querySelector('.status-cell');
+
+                if (ugr <= 19 && uv <= 10) {
+                    statusCell.textContent = 'OK';
+                    statusCell.className = 'status-cell status-ok';
+                } else if (ugr <= 22 && uv <= 20) {
+                    statusCell.textContent = 'WARNUNG';
+                    statusCell.className = 'status-cell status-warning';
+                } else {
+                    statusCell.textContent = 'FEHLER';
+                    statusCell.className = 'status-cell status-error';
+                }
+            });
+        }
+
+        // Beispiel-Funktionen zum Hinzufügen von Zeilen
+        function addRaumRow() {
+            const tbody = document.querySelector('#raumliste tbody');
+            const newRow = tbody.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Raumname"></td>
+                <td><input type="number" value="50"></td>
+                <td><input type="number" value="100"></td>
+                <td><input type="number" value="100"></td>
+                <td><input type="number" value="90"></td>
+                <td><input type="number" value="90"></td>
+                <td><input type="number" value="19"></td>
+                <td><input type="number" value="19"></td>
+                <td class="status-cell">OK</td>
+            `;
+            // Event-Listener für neue Inputs
+            newRow.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updateRaumStatus);
+            });
+        }
+
+        function addLeuchteRow() {
+            const tbody = document.querySelector('#leuchten tbody');
+            const newRow = tbody.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Hersteller"></td>
+                <td><input type="text" placeholder="Modell"></td>
+                <td><input type="number" value="2000"></td>
+                <td><input type="number" value="20"></td>
+                <td><input type="number" value="90"></td>
+                <td><input type="number" value="50000"></td>
+                <td><input type="number" value="300"></td>
+                <td>100</td>
+                <td>150</td>
+            `;
+        }
+
+        // Event-Listener für alle Tabellen-Inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            // Raumliste
+            document.querySelectorAll('#raumliste input').forEach(input => {
+                input.addEventListener('input', updateRaumStatus);
+            });
+
+            // Messprotokoll
+            document.querySelectorAll('#messprotokoll input').forEach(input => {
+                input.addEventListener('input', updateMessStatus);
+            });
+
+            // Initiale Status-Berechnung
+            updateRaumStatus();
+            updateMessStatus();
+        });
+    </script>
+</body>
+</html>
